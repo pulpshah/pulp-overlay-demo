@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useState } from "react";
 
-export default function ReplicatePage() {
+function ReplicatePage() {
   const searchParams = useSearchParams();
   const targetUrl = searchParams.get("url");
   const [htmlContent, setHtmlContent] = useState<string | null>(null);
@@ -151,11 +151,10 @@ export default function ReplicatePage() {
   };
 
   if (!targetUrl) {
-    return <Suspense fallback={<p>Loading page...</p>}><p className="text-red-500">Error: URL parameter is missing.</p></Suspense>;
+    return <p className="text-red-500">Error: URL parameter is missing.</p>;
   }
 
   return (
-    <Suspense fallback={<p>Loading page...</p>}>
     <div>
       {htmlContent ? (
         <div
@@ -205,6 +204,13 @@ export default function ReplicatePage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AnalyzePage() {
+  return (
+    <Suspense fallback={<p>Loading page...</p>}>
+      <ReplicatePage />
     </Suspense>
   );
 }
