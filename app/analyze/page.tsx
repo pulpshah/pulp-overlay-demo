@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 
 export default function ReplicatePage() {
   const searchParams = useSearchParams();
@@ -151,10 +151,11 @@ export default function ReplicatePage() {
   };
 
   if (!targetUrl) {
-    return <p className="text-red-500">Error: URL parameter is missing.</p>;
+    return <Suspense fallback={<p>Loading page...</p>}><p className="text-red-500">Error: URL parameter is missing.</p></Suspense>;
   }
 
   return (
+    <Suspense fallback={<p>Loading page...</p>}>
     <div>
       {htmlContent ? (
         <div
@@ -204,5 +205,6 @@ export default function ReplicatePage() {
         </p>
       </div>
     </div>
+    </Suspense>
   );
 }
