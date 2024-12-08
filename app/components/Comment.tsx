@@ -1,87 +1,140 @@
-import { useState } from "react";
-import IconBox from "./IconBox";
-import LoadingScreen from "./CommentLoading";
+"use client";
 
-export default function Comment() {
-  // States for managing the comment's stages
-  const [state, setState] = useState<"locked" | "voting" | "intermediate" | "loading" | "revealed">("locked");
-  const [selectedVote, setSelectedVote] = useState<"agree" | "disagree" | null>(null);
+import React, { useState } from "react";
+import Image from "next/image";
 
-  // Function to handle voting
-  const handleVote = (vote: "agree" | "disagree") => {
-    setSelectedVote(vote); // Record the vote
-    setState("intermediate"); // Transition to intermediate state
-    setTimeout(() => setState("loading"), 100); // Transition to loading state after a brief delay
-  };
+type ReplyType = {
+  id: number;
+  author: string;
+  text: string;
+  createdAt: string;
+  replies?: ReplyType[];
+};
 
-  // Function to go back to the locked state
-  const handleBack = () => {
-    setState("locked");
-    setSelectedVote(null); // Reset the selected vote
+type CommentProps = {
+  commentText: string;
+  author: string;
+  commentIndex: number;
+  isExpanded: boolean;
+  isMinimized: boolean;
+  replies: ReplyType[];
+  email: string;
+  startingVoteLevel: number | null;
+};
+
+export default function Comment({
+  commentText,
+  author,
+  replies = [],
+}: CommentProps) {
+  const [isReplying, setIsReplying] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [showReplies, setShowReplies] = useState(false); // Toggle replies
+
+  const handleReplySubmit = () => {
+    if (!replyText.trim()) return;
+
+    // Placeholder reply logic
+    const newReply = {
+      id: Date.now(),
+      author: "You",
+      text: replyText,
+      createdAt: new Date().toISOString(),
+    };
+    replies.push(newReply); // Simulate backend response
+    setReplyText("");
+    setIsReplying(false);
+    setShowReplies(true); // Automatically show replies after adding
   };
 
   return (
-    <div className="w-full h-full flex gap-[10px] items-center relative">
-      {state === "loading" ? (
-        // Use the LoadingScreen component here
-        <LoadingScreen />
-      ) : (
-        <div className="flex items-center justify-center w-full h-full gap-[12px] px-[12px] py-[12px] rounded-[10px] bg-white border-[#7D7B7C] border-[0.5px]">
-          <div className="w-full h-fit">
-            <p className="h-auto">
-              Arsenal didn’t &lsquo;come back&lsquo;; Chelsea bottled it as usual. Can’t keep
-              blaming luck when you can’t hold a lead! 🙄
-            </p>
-          </div>
-          
-          {state === "locked" && (
-            <button onClick={() => setState("voting")}>
-              <IconBox src="/icons/lock-icon.svg" alt="Locked" />
-            </button>
-          )}
-
-          {state === "voting" && (
-            <div className="flex flex-col gap-[10px] items-center">
-              <IconBox
-                src="/icons/x-circle-icon.svg"
-                alt="Disagree"
-                className="bg-blur-[6px] drop-shadow-[0_0_8.7px_#FFCDCD] drop-shadow-[0_0_35.2px_rgba(255,255,255,0.14)]"
-                onClick={() => handleVote("disagree")}
-              />
-              <IconBox
-                src="/icons/loading-icon.svg"
-                alt="Back"
-                className="bg-blur-[6px] drop-shadow-[0_0_35.2px_rgba(255,255,255,0.14)]"
-                onClick={handleBack}
-              />
-              <IconBox
-                src="/icons/check-circle-icon.svg"
-                alt="Agree"
-                className="bg-blur-[6px] drop-shadow-[0_0_8.7px_#DAFFCE] drop-shadow-[0_0_35.2px_rgba(255,255,255,0.14)]"
-                onClick={() => handleVote("agree")}
-              />
-            </div>
-          )}
-
-          {state === "intermediate" && selectedVote && (
-            <div className="flex justify-center items-center w-full">
-              {/* Show the selected icon in its container */}
-              <div className="flex flex-col gap-[10px] items-center">
-                <IconBox
-                  src={selectedVote === "agree" ? "/icons/check-circle-icon.svg" : "/icons/x-circle-icon.svg"}
-                  alt={selectedVote === "agree" ? "Agree" : "Disagree"}
-                  className="bg-blur-[6px] drop-shadow-[0_0_8.7px_#DAFFCE] drop-shadow-[0_0_35.2px_rgba(255,255,255,0.14)]"
-                />
+    <div className="mb-2">
+      <div className="flex items-start gap-2">
+        {/* Main Comment Box */}
+        <div className="flex-1">
+          <div className="bg-[#2E2E2E] rounded-xl p-3 border border-white/10">
+            {/* Author Header */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-white font-medium">{author}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button className="opacity-100 hover:opacity-100 transition-opacity">
+                  <Image
+                    src="/icons/reaction-icon.svg"
+                    alt="Reaction"
+                    width={19}
+                    height={19}
+                    className="invert brightness-0"
+                  />
+                </button>
+                <button
+                  onClick={() => setIsReplying(!isReplying)}
+                  className="opacity-60 hover:opacity-100 transition-opacity"
+                >
+                  <Image
+                    src="/icons/reply-icon.svg"
+                    alt="Reply"
+                    width={19}
+                    height={19}
+                    className="invert brightness-0"
+                  />
+                </button>
               </div>
             </div>
-          )}
 
-          {state === "revealed" && (
-            <div className="flex items-center justify-center w-full h-full">
-              {/* Placeholder content for revealed state */}
-              <p className="revealed-placeholder">Revealed content goes here.</p>
+            {/* Comment Text */}
+            <p className="text-white text-[15px] mb-3">{commentText}</p>
+
+            {/* Footer with Reply Count */}
+            <div className="flex items-center justify-end">
+              <button
+                onClick={() => setShowReplies(!showReplies)}
+                className="text-[white] text-sm hover:text-[white] transition-colors"
+              >
+                {replies.length} {replies.length === 1 ? "reply" : "replies"}
+              </button>
             </div>
-          )}
+          </div>
+        </div>
+      </div>
+
+      {/* Add Reply */}
+      {isReplying && (
+        <div className="mt-2 ml-8">
+          <div className="bg-[#2E2E2E] rounded-xl p-3 border border-white/10">
+            <input
+              type="text"
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder="Write your reply..."
+              className="w-full bg-transparent text-white border-none outline-none text-sm"
+            />
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={handleReplySubmit}
+                className="px-4 py-1 bg-blue-500 text-white text-sm rounded-full hover:bg-blue-600 transition-colors"
+              >
+                Reply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Replies Section */}
+      {showReplies && replies.length > 0 && (
+        <div className="ml-4 mt-2 space-y-2">
+          {replies.map((reply) => (
+            <div key={reply.id} className="flex gap-3">
+              <div className="flex-1 bg-[#2E2E2E] rounded-xl p-3 border border-white/10">
+                <div className="mb-1">
+                  <span className="text-white font-medium">{reply.author}</span>
+                </div>
+                <p className="text-white text-sm">{reply.text}</p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

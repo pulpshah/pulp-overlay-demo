@@ -1,27 +1,60 @@
-import Image from "next/image";
+import AIButton from "./AIButton";
+import GlobeButton from "./GlobeButton";
+import CommentsButton from "./CommentsButton";
+import { useState } from "react";
 
-export default function TopPill() {
+export default function TopPill({
+  onCommentsClick,
+  commentsOpen,
+}: {
+  onCommentsClick: () => void;
+  commentsOpen: boolean;
+}) {
+  const [activeIcon, setActiveIcon] = useState<"comments" | "ai" | "globe" | null>(null);
+
+  const handleSetActiveIcon = (icon: "comments" | "ai" | "globe") => {
+    setActiveIcon((prev) => {
+      const newActive = prev === icon ? null : icon;
+      console.log(`Active icon changed: ${newActive}`);
+      return newActive;
+    });
+  };
+  
+
   return (
-    <div className="top-pill bg-[#2E2E2E]/80 flex flex-row items-center justify-between rounded-[16px] px-[10px] gap-[20px] max-w-[132px] w-full h-[32px]">
-      <div className="w-[24px] h-[24px]">
-        <button>
-          <Image
-            src={"/icons/comment-icon.svg"}
-            alt="Comments"
-            width={24}
-            height={24}
-          />
-        </button>
-      </div>
-      <div className="w-[24px] h-[24px]">
-        <button>
-          <Image src="/icons/ai-icon.svg" alt="AI" width={24} height={24} />
-        </button>
-      </div>
-      <div className="w-[24px] h-[24px]">
-        <button>
-          <Image src="/icons/globe-icon.svg" alt="References" width={24} height={24} />
-        </button>
+    <div
+      className={`flex flex-col items-start gap-[12px] rounded-[999px] bg-white/20 backdrop-blur-[12px] ${
+        activeIcon ? "pill-active" : ""
+      }`}
+    >
+      <div className="flex p-[2px] justify-center items-center gap-[12px]">
+        <div className="flex h-[38px] py-[5px] justify-center items-center gap-[24px] rounded-[19.2px] bg-[#0E0E0E]">
+          <div className="flex py-[10px] px-[8px] gap-[10px]">
+            <div className="flex items-center gap-[24px]">
+              <div>
+              <CommentsButton
+                onClick={() => {
+                  onCommentsClick();
+                  handleSetActiveIcon("comments");
+                }}
+                isOpen={activeIcon === "comments"}
+              />
+              </div>
+              <div>
+              <AIButton
+                onClick={() => handleSetActiveIcon("ai")}
+                isActive={activeIcon === "ai"}
+              />
+              </div>
+              <div>
+                <GlobeButton
+                  onClick={() => handleSetActiveIcon("globe")}
+                  isActive={activeIcon === "globe"}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

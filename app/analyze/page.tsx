@@ -3,12 +3,10 @@
 import { useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useState } from "react";
 import ChatPill from "../CommentBox/ChatPill";
-import TopPill from "../components/TopPill";
 import ContextMenu from "../components/ContextMenu";
-import Comment from "../components/Comment";
 import { HighlightButton } from "../components/HighlightButton";
 import { HighlighterModal } from "../components/HighlighterModal";
-import { Sidebar } from "../components/Sidebar";
+import CommentsSection from "../components/CommentsSection";
 
 type ContextMenuPosition = {
   x: number;
@@ -102,9 +100,9 @@ function ReplicatePage() {
     setContextMenuPosition(null);
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  // const toggleSidebar = () => {
+  //   setIsSidebarOpen(!isSidebarOpen);
+  // };
 
   if (!targetUrl) {
     return <p className="text-red-500">Error: URL parameter is missing.</p>;
@@ -114,11 +112,6 @@ function ReplicatePage() {
     <div className="flex min-h-screen relative">
       {/* Main Content */}
       <div className="flex-1 flex flex-col pt-[64px]">
-        {/* Top Pill */}
-        <div className="fixed top-0 left-1/2 mt-[12px] transform -translate-x-1/2 z-30">
-          <TopPill />
-        </div>
-
         {/* Page Content */}
         <div>
           {htmlContent ? (
@@ -159,12 +152,14 @@ function ReplicatePage() {
       </div>
 
       {/* Sidebar */}
-      <Sidebar
+      {/* <Sidebar
         isOpen={isSidebarOpen}
         toggleSidebar={toggleSidebar}
       >
         <Comment />
-      </Sidebar>
+        <RelatedMediaTemplates />
+      </Sidebar> */}
+      <CommentsSection />
     </div>
   );
 }
