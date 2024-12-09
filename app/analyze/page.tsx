@@ -28,55 +28,42 @@ function ReplicatePage() {
   }, [targetUrl]);
 
   // Function to fetch claims using OpenAI's API
-  const fetchClaimsFromOpenAI = async (text: string) => {
-    const prompt = `
-      Analyze the following text and identify all claims. For each claim, provide:
-      - The exact text of the claim.
-      - The claim type: "Fact", "Value", or "Policy".
-      - A suggestion for a highlight color for each claim type.
-
-      Respond strictly in JSON format as an array of objects:
-      [
-        { "substring": "Claim text here", "type": "Fact", "color": "yellow" },
-        { "substring": "Claim text here", "type": "Value", "color": "lightblue" },
-        { "substring": "Claim text here", "type": "Policy", "color": "lightgreen" },
-        ...
-      ]
-
-      Text: "${text}"
-    `;
-
+  const fetchClaimsFromGroq = async (text: string) => {
     try {
+      // Call the API endpoint
       const response = await fetch(`${window.location.origin}/api/openai`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ text }), // Pass the text in the request body
       });
-
+  
+      // Check for response errors
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to fetch claims from OpenAI.");
+        throw new Error(error.error || "Failed to fetch claims from GROQ.");
       }
-
+  
+      // Parse the response JSON
       const data = await response.json();
-      console.log("OpenAI Response:", data);
-
-      // Parse and return the JSON response
-      return data.claims.claims || [];
+      console.log("GROQ Response:", data);
+  
+      // Return the claims directly
+      return data.claims  || [];
     } catch (error) {
-      console.error("Error fetching claims from OpenAI:", error);
+      console.error("Error fetching claims from GROQ:", error);
       return [];
     }
   };
+  
 
   // Function to highlight text based on the claims
   const highlightText = async () => {
     const container = document.getElementById("replicated-content");
 
     if (container) {
-      const claims = await fetchClaimsFromOpenAI(container.innerText);
+      const claims = await fetchClaimsFromGroq(container.innerText);
 
       if (claims.length === 0) {
         console.log("No claims found.");

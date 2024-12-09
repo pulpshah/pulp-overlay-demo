@@ -1,63 +1,101 @@
-import { NextResponse } from "next/server";
+import Groq from "groq-sdk";
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+// Initialize the GROQ client
+const groq = new Groq();
 
+// Define the schema for claim analysis
+const schema = {
+  $defs: {
+    Claim: {
+      properties: {
+        substring: { title: "Claim Text", type: "string" },
+        type: {
+          title: "Claim Type",
+          type: "string",
+          enum: ["Fact", "Value", "Policy"], // Enum for valid claim types
+        },
+        color: { title: "Highlight Color", type: "string" },
+      },
+      required: ["substring", "type", "color"],
+      title: "Claim",
+      type: "object",
+    },
+  },
+  properties: {
+    claims: {
+      items: { $ref: "#/$defs/Claim" },
+      title: "Claims",
+      type: "array",
+    },
+  },
+  required: ["claims"],
+  title: "Claim Analysis",
+  type: "object",
+};
+
+// Analyze text API route
 export async function POST(req: Request) {
-  if (!OPENAI_API_KEY) {
-    return NextResponse.json(
-      { error: "OpenAI API key is not configured" },
-      { status: 500 }
-    );
-  }
-
   try {
-    const { prompt } = await req.json();
+    // Parse the request body
+    const body = await req.json();
+    const { text } = body;
 
-    if (!prompt || typeof prompt !== "string") {
-      return NextResponse.json(
-        { error: "Invalid or missing prompt" },
-        { status: 400 }
+    if (!text || typeof text !== "string") {
+      return new Response(
+        JSON.stringify({ error: "Invalid or missing 'text' in request body" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // Use the correct OpenAI chat endpoint
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4-turbo", // Ensure you're using a chat-compatible model
-        messages: [
-          { role: "system", content: "You are a helpful assistant. Respond strictly in JSON format." },
-          { role: "user", content: prompt },
-        ],
-        response_format: { "type": "json_object" },
-        temperature: 0.7,
-      }),
+    // Pretty printing improves completion results.
+    const jsonSchema = JSON.stringify(schema, null, 4);
+
+    // Perform text analysis
+    const chat_completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: `You are a text analysis tool that identifies claims in text and classifies them.\nYour output must strictly adhere to the following JSON schema: ${jsonSchema}`,
+        },
+        {
+          role: "user",
+          content: `Analyze the following text and identify all claims. For each claim, provide:
+          - The exact text of the claim.
+          - The claim type: "Fact", "Value", or "Policy".
+          - A suggestion for a highlight color for each claim type.
+
+          Respond strictly in JSON format as an array of objects:
+          [
+            { "substring": "Claim text here", "type": "Fact", "color": "yellow" },
+            { "substring": "Claim text here", "type": "Value", "color": "lightblue" },
+            { "substring": "Claim text here", "type": "Policy", "color": "lightgreen" },
+            ...
+          ]
+
+          Text: "${text}"`,
+        },
+      ],
+      model: "llama3-8b-8192",
+      temperature: 0, // Deterministic output
+      stream: false,
+      response_format: { type: "json_object" }, // Request a JSON response
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      return NextResponse.json(
-        { error: error.error.message },
-        { status: response.status }
-      );
-    }
+    // Parse and return the response
+    const result = JSON.parse(chat_completion.choices[0]?.message?.content || "[]");
 
-    const data = await response.json();
-    
-
-    // Extract and return claims
-    const messageContent = data.choices?.[0]?.message?.content || "";
-    console.log("OpenAI Response:", messageContent);
-    return NextResponse.json({ claims: JSON.parse(messageContent) });
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error("Error in API Proxy:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
+    console.error("Error analyzing text:", error);
+
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
