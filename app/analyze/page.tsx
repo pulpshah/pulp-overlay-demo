@@ -52,7 +52,7 @@ function ReplicatePage() {
       // Return the claims directly
       return data.claims  || [];
     } catch (error) {
-      console.error("Error fetching claims from GROQ:", error);
+      console.error("Error fetching claims from GROQ", error);
       return [];
     }
   };
