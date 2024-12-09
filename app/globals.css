@@ -17,7 +17,7 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-poppins-regular), Arial, Helvetica, sans-serif; /* Use Poppins as the default font */
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
@@ -28,9 +28,4 @@ body {
 
 .top-pill-shadow {
   box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.25);
-}
-
-.highlight {
-  background-color: yellow;
-  cursor: pointer;
 }
